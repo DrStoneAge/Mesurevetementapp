@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mesure VÃªtement</title>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .section {
+      margin-bottom: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .button {
+      flex: 1 1 40%;
+      padding: 10px;
+      background-color: #008CBA;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .preview {
+      margin-top: 10px;
+      max-width: 100%;
+      border: 2px dashed #ccc;
+      padding: 10px;
+      text-align: center;
+      position: relative;
+    }
+    .preview img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+    .flÃ¨che {
+      position: absolute;
+      color: red;
+      font-weight: bold;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 2px 4px;
+      border-radius: 4px;
+      border: 1px solid red;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    .fiche {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+      position: relative;
+    }
+    .fiche img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .button-submit {
+      background-color: #28a745;
+      color: white;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .button-export {
+      background-color: #ff9800;
+      color: white;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Mesure VÃªtement</h1>
+
+  <!-- Choix de piÃ¨ce -->
+  <div class="section">
+    <h3>Choisissez la piÃ¨ce :</h3>
+    <div class="button-group">
+      <button class="button" onclick="selectCoin('1â‚¬')">1â‚¬</button>
+      <button class="button" onclick="selectCoin('2â‚¬')">2â‚¬</button>
+      <button class="button" onclick="selectCoin('50c')">50c</button>
+      <button class="button" onclick="selectCoin('20c')">20c</button>
+      <button class="button" onclick="selectCoin('10c')">10c</button>
+    </div>
+    <p id="coinResult">PiÃ¨ce sÃ©lectionnÃ©e : aucune</p>
+  </div>
+
+  <!-- Choix vÃªtement -->
+  <div class="section">
+    <h3>Type de vÃªtement :</h3>
+    <div class="button-group">
+      <button class="button" onclick="selectVetement('T-shirt')">ðŸ‘• T-shirt</button>
+      <button class="button" onclick="selectVetement('Chemise')">ðŸ‘” Chemise</button>
+      <button class="button" onclick="selectVetement('Pantalon')">ðŸ‘– Pantalon</button>
+      <button class="button" onclick="selectVetement('Pull')">ðŸ§¥ Pull</button>
+      <button class="button" onclick="selectVetement('Short')">ðŸ©³ Short</button>
+      <button class="button" onclick="selectVetement('Robe')">ðŸ‘— Robe</button>
+    </div>
+    <p id="vetementResult">VÃªtement sÃ©lectionnÃ© : aucun</p>
+  </div>
+
+  <!-- Section Photo avec camÃ©ra live -->
+  <div class="section">
+    <h3>Photo du vÃªtement :</h3>
+    <div>
+      <button class="button" id="startCameraBtn">ðŸ“· Ouvrir la camÃ©ra</button>
+      <button class="button" id="takePhotoBtn" disabled>ðŸ“¸ Prendre la photo</button>
+    </div>
+    <video id="video" width="100%" autoplay playsinline style="margin-top:10px; border-radius:8px; display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div class="preview" id="imagePreview">
+      <p>Aucune image sÃ©lectionnÃ©e</p>
+    </div>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="section">
+    <h3>DÃ©tails du vÃªtement :</h3>
+    <input type="text" id="marque" placeholder="Marque">
+    <input type="text" id="couleur" placeholder="Couleur">
+    <input type="text" id="matiere" placeholder="MatiÃ¨re">
+    <select id="etat">
+      <option value="">Ã‰tat d'usure</option>
+      <option value="Neuf">Neuf</option>
+      <option value="TrÃ¨s bon Ã©tat">TrÃ¨s bon Ã©tat</option>
+      <option value="Bon Ã©tat">Bon Ã©tat</option>
+      <option value="Correct">Correct</option>
+      <option value="AbÃ®mÃ©">AbÃ®mÃ©</option>
+    </select>
+    <button class="button-submit" onclick="genererFiche()">GÃ©nÃ©rer la fiche produit</button>
+  </div>
+
+  <!-- Fiche -->
+  <div class="section fiche" id="ficheResult" style="display: none;">
+    <h3>ðŸ“‹ Fiche produit :</h3>
+    <div id="ficheContent"></div>
+    <button class="button-export" onclick="exportAsImage()">ðŸ“¥ TÃ©lÃ©charger lâ€™image</button>
+    <button class="button-export" onclick="exportAsPDF()">ðŸ“„ TÃ©lÃ©charger en PDF</button>
+  </div>
+
+  <script>
+    let selectedCoin = "";
+    let selectedVetement = "";
+    let imageData = "";
+
+    // Ã‰lÃ©ments camÃ©ra
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const takePhotoBtn = document.getElementById('takePhotoBtn');
+    const preview = document.getElementById('imagePreview');
+    let stream;
+
+    // Choix piÃ¨ce
+    function selectCoin(coin) {
+      selectedCoin = coin;
+      document.getElementById("coinResult").innerText = "PiÃ¨ce sÃ©lectionnÃ©e : " + coin;
+    }
+
+    // Choix vÃªtement
+    function selectVetement(type) {
+      selectedVetement = type;
+      document.getElementById("vetementResult").innerText = "VÃªtement sÃ©lectionnÃ© : " + type;
+    }
+
+    // Ouvrir camÃ©ra
+    startCameraBtn.onclick = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        takePhotoBtn.disabled = false;
+        startCameraBtn.disabled = true;
+      } catch (err) {
+        alert('Erreur accÃ¨s camÃ©ra: ' + err.message);
+      }
+    };
+
+    // Prendre photo
+    takePhotoBtn.onclick = () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      imageData = canvas.toDataURL('image/png');
+
+      // ArrÃªter la camÃ©ra
+      stream.getTracks().forEach(track => track.stop());
+      video.style.display = 'none';
+      takePhotoBtn.disabled = true;
+      startCameraBtn.disabled = false;
+
+      // Afficher image
+      preview.innerHTML = `
+        <img src="${imageData}" alt="Photo vÃªtement" />
+        <div class="flÃ¨che" style="top: 10px; left: 10px;">â†” Largeur</div>
+        <div class="flÃ¨che" style="bottom: 10px; left: 10px;">â†• Longueur</div>
+      `;
+    };
+
+    // GÃ©nÃ©rer fiche produit
+    function genererFiche() {
+      const marque = document.getElementById("marque").value;
+      const couleur = document.getElementById("couleur").value;
+      const matiere = document.getElementById("matiere").value;
+      const etat = document.getElementById("etat").value;
+
+      const ficheHTML = `
+        ${imageData ? '<img src="' + imageData + '" alt="VÃªtement">' : ''}
+        <p><strong>Type :</strong> ${selectedVetement || 'Non spÃ©cifiÃ©'}</p>
+        <p><strong>Marque :</strong> ${marque}</p>
+        <p><strong>Couleur :</strong> ${couleur}</p>
+        <p><strong>MatiÃ¨re :</strong> ${matiere}</p>
+        <p><strong>Ã‰tat :</strong> ${etat}</p>
+        <p><strong>PiÃ¨ce de rÃ©fÃ©rence :</strong> ${selectedCoin || 'Non spÃ©cifiÃ©e'}</p>
+      `;
+
+      document.getElementById("ficheContent").innerHTML = ficheHTML;
+      document.getElementById("ficheResult").style.display = "block";
+    }
+
+    // Export PNG
+    function exportAsImage() {
+      const fiche = document.getElementById("ficheResult");
+      html2canvas(fiche).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "fiche_vetement.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    // Export PDF
+    async function exportAsPDF() {
+      const fiche = document.getElementById("ficheResult");
+      const canvas = await html2canvas(fiche);
+      const imgData = canvas.toDataURL("image/png");
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: [canvas.width, canvas.height]
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save("fiche_vetement.pdf");
+    }
+  </script>
+</body>
+</html>
